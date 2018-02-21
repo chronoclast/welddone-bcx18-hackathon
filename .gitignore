@@ -37,6 +37,10 @@
 ehthumbs.db
 Thumbs.db
 
+# R history files #
+###################
+*.Rhistory
+
 # Specific files and folders from this project #
 ################################################
 temp/*
