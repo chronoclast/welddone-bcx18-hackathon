@@ -2,8 +2,10 @@ library(shiny)
 library(httr)
 library(shinydashboard)
 library(jsonlite)
+library(RCurl)
 
-values <- reactiveValues(flag = FALSE)
+# Make reactive flags
+values <- reactiveValues(flag = FALSE, sick_flag = FALSE)
 
 result <- fromJSON("http://100.102.5.8:8000/nws-rest-api/last-weld")
 temp <- as.data.frame(result$current)
@@ -13,6 +15,7 @@ temp$resistance <- temp$voltage/temp$current
 df <- temp
 
 ip_addr = 'http://192.168.1.1/port0.jsn'
+ftp_url = "ftp://192.168.1.2"
 beat_df <- NULL
 
 ui <- dashboardPage(
@@ -41,13 +44,12 @@ server <- function(input, output, session){
     invalidateLater(250)
     balluf_result <- fromJSON(ip_addr)
     dist <- strtoi(tolower(gsub("\\ ","",substr(balluf_result[[2]]$processInputs,1,5))),16)/10
-    print(dist)
     r <- as.data.frame(Sys.time())
     names(r) <- "time"
     r$value <- ifelse(dist < 6000,1,0)
     if(r$value == 1){
-      print("Value is 1!")
       values$flag <- TRUE
+      values$sick_flag <- TRUE
     }
     beat_df <<- rbind(beat_df, r)
     if (nrow(beat_df) > 30){
@@ -80,19 +82,6 @@ server <- function(input, output, session){
               value = "1 Sec")
     )
   })
-  # output$weld <- renderPlot({ #api call plot ####
-  #   plotReactive()
-  # })
-  # plotReactive <- reactive({
-  #   if(values$flag==TRUE){
-  #     df <- apiCall()
-  #     values$flag <- FALSE
-  #   }
-  #   par(mfrow=c(3,1))
-  #   plot(x=row.names(df),y=df$current, type="l",col="limegreen")
-  #   plot(x=row.names(df),y=df$resistance,col="red", type ="l")
-  #   plot(x=row.names(df),y=df$voltage, type="l")
-  # })
   output$weld <- renderPlot({
     if(values$flag==TRUE){
       df <- apiCall()
@@ -103,9 +92,33 @@ server <- function(input, output, session){
     plot(x=row.names(df),y=df$resistance,col="red", type ="l")
     plot(x=row.names(df),y=df$voltage, type="l")
   })
+  sickImage <- reactive({
+    invalidateLater(100)
+    print("executing...")
+    userpwd <- "weld:done"
+    filenames <- getURL(ftp_url, userpwd = userpwd,
+                        ftp.use.epsv = FALSE,dirlistonly = TRUE) 
+    
+    destnames <- filenames <-  strsplit(filenames, "\r*\n")[[1]] # destfiles = origin file names
+    destnames <- filenames <- filenames[grepl("\\.png",filenames)]
+    filenames <- paste0(ftp_url,"/",filenames)
+    con <-  getCurlHandle(ftp.use.epsv = FALSE, userpwd="weld:done")
+    mapply(function(x,y) writeBin(getBinaryURL(x, curl = con, dirlistonly = FALSE), 
+                                  y), x = filenames, y = paste("D:/boschebol_hackathon/boschebol-gehaktbol/www/",destnames, sep = "")) #writing all zipped files in one directory
+    print("Image retrieved!")
+    return("image.png")
+  })
   output$pic <- renderUI({ #SICK pic ####
-    div(img(src="image.png", width = 150, height = 150), style="text-align:center;")
-    })  
+    print(paste0("SICK: ",values$sick_flag))
+    if(values$sick_flag == TRUE){
+      print("I AM HERE")
+      file <- sickImage()
+      values$sick_flag <- FALSE
+      div(img(src=file, width = 150, height = 150), style="text-align:center;")
+    } else {
+      div(img(src="image.png", width = 150, height = 150), style="text-align:center;")
+    }
+  })  
 }
 
 shinyApp(ui, server)
@@ -170,3 +183,17 @@ shinyApp(ui, server)
 # }
 # 
 # shinyApp(ui, server)
+
+# output$weld <- renderPlot({ #api call plot ####
+#   plotReactive()
+# })
+# plotReactive <- reactive({
+#   if(values$flag==TRUE){
+#     df <- apiCall()
+#     values$flag <- FALSE
+#   }
+#   par(mfrow=c(3,1))
+#   plot(x=row.names(df),y=df$current, type="l",col="limegreen")
+#   plot(x=row.names(df),y=df$resistance,col="red", type ="l")
+#   plot(x=row.names(df),y=df$voltage, type="l")
+# })
