@@ -5,7 +5,9 @@ library(jsonlite)
 library(RCurl)
 
 # Make reactive flags
-values <- reactiveValues(flag = FALSE, sick_flag = FALSE)
+values <- reactiveValues(flag = FALSE, sick_flag = FALSE, 
+                         prev_time = NULL, cur_time = Sys.time(),
+                         process_time = NULL, image_ok=NULL)
 
 result <- fromJSON("http://100.102.5.8:8000/nws-rest-api/last-weld")
 temp <- as.data.frame(result$current)
@@ -48,8 +50,11 @@ server <- function(input, output, session){
     names(r) <- "time"
     r$value <- ifelse(dist < 6000,1,0)
     if(r$value == 1){
+      values$prev_time <-  values$cur_time
       values$flag <- TRUE
       values$sick_flag <- TRUE
+      values$cur_time <- Sys.time()
+      values$process_time <- paste0(round(values$cur_time - values$prev_time,2),"sec")
     }
     beat_df <<- rbind(beat_df, r)
     if (nrow(beat_df) > 30){
@@ -79,7 +84,7 @@ server <- function(input, output, session){
       infoBox(title = "Error",icon = icon("exclamation-circle"), color = "orange",
               value = ifelse(df$error[1]!=0,"Yes","No")),
       infoBox(title = "Time",icon = icon("recycle"), color = "purple",
-              value = "1 Sec")
+              value = values$process_time)
     )
   })
   output$weld <- renderPlot({
@@ -114,10 +119,45 @@ server <- function(input, output, session){
       print("I AM HERE")
       file <- sickImage()
       values$sick_flag <- FALSE
-      div(img(src=file, width = 150, height = 150), style="text-align:center;")
+      area <- as.numeric(readLines("www/text.txt"))
+      if (area < 400000){
+        values$image_ok <- TRUE
+      } else {
+        values$image_ok <- FALSE
+      }
+      if(values$image_ok==TRUE){
+        feedback = "thumbs_up.png"
+      }
+      if(values$image_ok==FALSE){
+        feedback = "thumbs_down.png"
+      }
+      print(feedback)
+      div(
+        fluidRow(
+          img(src=feedback, width = 250, height = 250),
+          img(src=file, width = 250, height = 250)),
+        style="text-align:center;")
     } else {
-      div(img(src="image.png", width = 150, height = 150), style="text-align:center;")
-    }
+      if(!is.null(values$image_ok)){
+        if(values$image_ok==TRUE){
+          feedback = "thumbs_up.png"
+        }
+        if(values$image_ok==FALSE){
+          feedback = "thumbs_down.png"
+        }
+        div(
+          fluidRow(
+            img(src=feedback, width = 250, height = 250),
+            img(src="image.png", width = 250, height = 250)),
+          style="text-align:center;")
+      } else {
+        div(
+          fluidRow(
+            img(src="image.png", width = 250, height = 250),
+          style="text-align:center;")
+          )
+        }  
+      }
   })  
 }
 
@@ -125,6 +165,22 @@ shinyApp(ui, server)
 
 
 #### OLD ####
+
+#div(img(src="image.png", width = 350, height = 350), style="text-align:center;")
+# if(values$image_ok==TRUE){
+#   feedback = "thumbs_up.png"
+# } else if(values$image_ok==FALSE){
+#   feedback = "thumbs_down.png"
+# } else {
+#   feedback = NULL
+# }
+# if(!is.null(feedback)){
+#   div(
+#     fluidRow(
+#       img(src="image.png", width = 250, height = 250),
+#       img(src=feedback, width = 250, height = 250)),
+#     style="text-align:center;")
+# } else {
 # ui <- fluidPage(
 #   fluidRow(
 #     box(plotOutput("weld")),
