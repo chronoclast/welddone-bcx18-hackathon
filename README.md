@@ -1,7 +1,7 @@
-# boschebol-gehaktbol
+# Project WeldDone
 
 ## Introduction
-`PLACEHOLDER`
+This project integrates real-time welding data, sensor input, and live images of the welding spot to analyze the quality and detect anomalies.
 
 ## Installation
 `PLACEHOLDER`
