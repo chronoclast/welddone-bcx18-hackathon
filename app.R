@@ -3,12 +3,7 @@ library(httr)
 library(shinydashboard)
 library(jsonlite)
 
-#df <- as.data.frame(sample(c(50.5:300),20))
-#names(df) <- "current"
-#df$resistance <- sample(c(70.5:150),20)
-#df$volt <- sample(c(110.5:170.8),20)
-#previous_value <- 0
-flag = FALSE
+values <- reactiveValues(flag = FALSE)
 
 result <- fromJSON("http://100.102.5.8:8000/nws-rest-api/last-weld")
 temp <- as.data.frame(result$current)
@@ -37,7 +32,7 @@ ui <- dashboardPage(
   )
 )
 
-server <- function(input, output){
+server <- function(input, output, session){
   output$heartbeat <- renderPlot({ #heartbeat plot ####
     df <- iolink()
     plot(x=df$time, y=df$value, type="l",col="limegreen", ylim=c(0,1), lwd=2)
@@ -52,8 +47,7 @@ server <- function(input, output){
     r$value <- ifelse(dist < 6000,1,0)
     if(r$value == 1){
       print("Value is 1!")
-      flag <<- TRUE
-      print(flag)
+      values$flag <- TRUE
     }
     beat_df <<- rbind(beat_df, r)
     if (nrow(beat_df) > 30){
@@ -62,21 +56,20 @@ server <- function(input, output){
     return(beat_df)
   })
   apiCall <- reactive({ #api call reactive ####
-    #invalidateLater(5000)
-    result <- fromJSON("http://100.102.5.8:8000/nws-rest-api/last-weld")
-    temp <- as.data.frame(result$current)
-    names(temp) <- "current"
-    temp$voltage <- result$voltage
-    temp$resistance <- temp$voltage/temp$current
-    temp$spatter <- result$spatterTime
-    temp$error <- result$errorCode
-    df <<- temp
-    return(df)
+      result <- fromJSON("http://100.102.5.8:8000/nws-rest-api/last-weld")
+      temp <- as.data.frame(result$current)
+      names(temp) <- "current"
+      temp$voltage <- result$voltage
+      temp$resistance <- temp$voltage/temp$current
+      temp$spatter <- result$spatterTime
+      temp$error <- result$errorCode
+      df <<- temp
+      return(df)
   })
   output$infoboxes <- renderUI({ #infoboxes ####
-    if (flag == TRUE){
+    if(values$flag==TRUE){
       df <- apiCall()
-      flag <<- FALSE
+      values$flag <- FALSE
     }
     fluidRow(
       infoBox(title = "Splatter",icon = icon("tint"), color = "lime",
@@ -87,26 +80,28 @@ server <- function(input, output){
               value = "1 Sec")
     )
   })
-  checkFlag <- reactive({
-    #invalidateLater(100)
-    print("Reactive")
-    print(flag)
-    return(flag)
+  # output$weld <- renderPlot({ #api call plot ####
+  #   plotReactive()
+  # })
+  # plotReactive <- reactive({
+  #   if(values$flag==TRUE){
+  #     df <- apiCall()
+  #     values$flag <- FALSE
+  #   }
+  #   par(mfrow=c(3,1))
+  #   plot(x=row.names(df),y=df$current, type="l",col="limegreen")
+  #   plot(x=row.names(df),y=df$resistance,col="red", type ="l")
+  #   plot(x=row.names(df),y=df$voltage, type="l")
+  # })
+  output$weld <- renderPlot({
+    if(values$flag==TRUE){
+      df <- apiCall()
+      values$flag <- FALSE
     }
-  )
-  output$weld <- renderPlot({ #api call plot ####
-    req(flag)
-    print(flag)
-    isolate({
-      if (flag == TRUE){
-        df <- apiCall()
-        flag <<- FALSE
-      }
-      par(mfrow=c(3,1))
-      plot(x=row.names(df),y=df$current, type="l",col="limegreen")
-      plot(x=row.names(df),y=df$resistance,col="red", type ="l")
-      plot(x=row.names(df),y=df$voltage, type="l")
-    })
+    par(mfrow=c(3,1))
+    plot(x=row.names(df),y=df$current, type="l",col="limegreen")
+    plot(x=row.names(df),y=df$resistance,col="red", type ="l")
+    plot(x=row.names(df),y=df$voltage, type="l")
   })
   output$pic <- renderUI({ #SICK pic ####
     div(img(src="image.png", width = 150, height = 150), style="text-align:center;")
