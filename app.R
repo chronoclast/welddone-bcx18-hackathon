@@ -20,8 +20,9 @@ ip_addr = 'http://192.168.1.1/port0.jsn'
 ftp_url = "ftp://192.168.1.2"
 beat_df <- NULL
 
-ui <- dashboardPage( # UI ####
-  dashboardHeader(disable = TRUE),
+ui <- dashboardPage(skin = "black", # UI ####
+  dashboardHeader(title = tags$a(href='http://www.relayr.io',
+                                      tags$img(src="images.png", style="width:100px;height:auto;"))),
   dashboardSidebar(disable = TRUE),
   dashboardBody(
     fluidRow(
