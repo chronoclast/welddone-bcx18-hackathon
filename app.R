@@ -20,14 +20,14 @@ ip_addr = 'http://192.168.1.1/port0.jsn'
 ftp_url = "ftp://192.168.1.2"
 beat_df <- NULL
 
-ui <- dashboardPage(
+ui <- dashboardPage( # UI ####
   dashboardHeader(disable = TRUE),
   dashboardSidebar(disable = TRUE),
   dashboardBody(
     fluidRow(
       box(solidHeader = TRUE, status = "danger", title = div(icon("bolt","fa-fw"),"Last Weld"),
         uiOutput("infoboxes"),
-        plotOutput("weld", height = "750px")),
+        plotOutput("weld", height = "700px")),
       div(box(solidHeader = TRUE, status = "danger", title = div(icon("image","fa-fw"),"SickScan"),
         uiOutput("pic"))),
           box(solidHeader = TRUE, status = "danger", title = div(icon("heartbeat","fa-fw"),"Part passing through..."),
@@ -87,15 +87,15 @@ server <- function(input, output, session){
               value = values$process_time)
     )
   })
-  output$weld <- renderPlot({
+  output$weld <- renderPlot({ ## OUTPUT WELD #####
     if(values$flag==TRUE){
       df <- apiCall()
       values$flag <- FALSE
     }
     par(mfrow=c(3,1))
-    plot(x=row.names(df),y=df$current, type="l",col="limegreen")
-    plot(x=row.names(df),y=df$resistance,col="red", type ="l")
-    plot(x=row.names(df),y=df$voltage, type="l")
+    plot(x=row.names(df),y=df$current, type="l",col="limegreen", main="Current", ylab="Amps", xlab="")
+    plot(x=row.names(df),y=df$resistance,col="red", type ="l", main = "Resistance", ylab="Ohms", xlab="")
+    plot(x=row.names(df),y=df$voltage, type="l", main="Voltage", ylab="Volt", xlab="")
   })
   sickImage <- reactive({
     invalidateLater(100)
@@ -105,7 +105,7 @@ server <- function(input, output, session){
                         ftp.use.epsv = FALSE,dirlistonly = TRUE) 
     
     destnames <- filenames <-  strsplit(filenames, "\r*\n")[[1]] # destfiles = origin file names
-    destnames <- filenames <- filenames[grepl("\\.png",filenames)]
+    #destnames <- filenames <- filenames[grepl("\\.png",filenames)]
     filenames <- paste0(ftp_url,"/",filenames)
     con <-  getCurlHandle(ftp.use.epsv = FALSE, userpwd="weld:done")
     mapply(function(x,y) writeBin(getBinaryURL(x, curl = con, dirlistonly = FALSE), 
@@ -116,11 +116,10 @@ server <- function(input, output, session){
   output$pic <- renderUI({ #SICK pic ####
     print(paste0("SICK: ",values$sick_flag))
     if(values$sick_flag == TRUE){
-      print("I AM HERE")
       file <- sickImage()
       values$sick_flag <- FALSE
-      area <- as.numeric(readLines("www/text.txt"))
-      if (area < 400000){
+      area <- readLines("www/area.txt")
+      if (area == "YES"){
         values$image_ok <- TRUE
       } else {
         values$image_ok <- FALSE
@@ -134,7 +133,7 @@ server <- function(input, output, session){
       print(feedback)
       div(
         fluidRow(
-          img(src=feedback, width = 250, height = 250),
+          img(src=feedback, width = 250, height = 250, border=1),
           img(src=file, width = 250, height = 250)),
         style="text-align:center;")
     } else {
