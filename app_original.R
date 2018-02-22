@@ -26,13 +26,13 @@ ui <- dashboardPage(skin = "black", # UI ####
   dashboardSidebar(disable = TRUE),
   dashboardBody(
     fluidRow(
-      box(solidHeader = TRUE, status = "danger", title = div(icon("bolt","fa-fw"),"Last Welding"),
+      box(solidHeader = TRUE, status = "danger", title = div(icon("bolt","fa-fw"),"Last Weld"),
         uiOutput("infoboxes"),
-        plotOutput("weld", height = "440px")),
+        plotOutput("weld", height = "700px")),
       div(box(solidHeader = TRUE, status = "danger", title = div(icon("image","fa-fw"),"SickScan"),
         uiOutput("pic"))),
           box(solidHeader = TRUE, status = "danger", title = div(icon("heartbeat","fa-fw"),"Part passing through..."),
-        plotOutput("heartbeat", height = "241px")
+        plotOutput("heartbeat", height = "375px")
       )
     )
   )
@@ -41,7 +41,7 @@ ui <- dashboardPage(skin = "black", # UI ####
 server <- function(input, output, session){
   output$heartbeat <- renderPlot({ #heartbeat plot ####
     df <- iolink()
-    plot(x=df$time, y=df$value, type="l",col="limegreen", ylim=c(0,1), lwd=2, xlab="Time")
+    plot(x=df$time, y=df$value, type="l",col="limegreen", ylim=c(0,1), lwd=2)
   })
   iolink <- reactive({ #iolink reactive ####
     invalidateLater(250)
@@ -80,7 +80,7 @@ server <- function(input, output, session){
       values$flag <- FALSE
     }
     fluidRow(
-      infoBox(title = "Spatter",icon = icon("tint"), color = "olive",
+      infoBox(title = "Splatter",icon = icon("tint"), color = "olive",
             value = ifelse(df$spatter[1]!=0,"Yes","No")),
       infoBox(title = "Error",icon = icon("exclamation-circle"), color = "lime",
               value = ifelse(df$error[1]!=0,"Yes","No")),
@@ -93,9 +93,10 @@ server <- function(input, output, session){
       df <- apiCall()
       values$flag <- FALSE
     }
-    par(mfrow=c(2,1))
+    par(mfrow=c(3,1))
     plot(x=row.names(df),y=df$current, type="l",col="limegreen", main="Current", ylab="Amps", xlab="")
     plot(x=row.names(df),y=df$resistance,col="red", type ="l", main = "Resistance", ylab="Ohms", xlab="")
+    plot(x=row.names(df),y=df$voltage, type="l", main="Voltage", ylab="Volt", xlab="")
   })
   sickImage <- reactive({
     invalidateLater(100)
@@ -133,8 +134,8 @@ server <- function(input, output, session){
       print(feedback)
       div(
         fluidRow(
-          img(src=feedback, width = 150, height = 150),
-          img(src=file, width = 220, height = 220)),
+          img(src=feedback, width = 250, height = 250, border=1),
+          img(src=file, width = 350, height = 350)),
         style="text-align:center;")
     } else {
       if(!is.null(values$image_ok)){
@@ -146,13 +147,13 @@ server <- function(input, output, session){
         }
         div(
           fluidRow(
-            img(src=feedback, width = 150, height = 150),
-            img(src="image.png", width = 220, height = 220)),
+            img(src=feedback, width = 250, height = 250),
+            img(src="image.png", width = 350, height = 350)),
           style="text-align:center;")
       } else {
         div(
           fluidRow(
-            img(src="image.png", width = 220, height = 220),
+            img(src="image.png", width = 350, height = 350),
           style="text-align:center;")
           )
         }  
@@ -162,3 +163,93 @@ server <- function(input, output, session){
 
 shinyApp(ui, server)
 
+
+#### OLD ####
+
+#div(img(src="image.png", width = 350, height = 350), style="text-align:center;")
+# if(values$image_ok==TRUE){
+#   feedback = "thumbs_up.png"
+# } else if(values$image_ok==FALSE){
+#   feedback = "thumbs_down.png"
+# } else {
+#   feedback = NULL
+# }
+# if(!is.null(feedback)){
+#   div(
+#     fluidRow(
+#       img(src="image.png", width = 250, height = 250),
+#       img(src=feedback, width = 250, height = 250)),
+#     style="text-align:center;")
+# } else {
+# ui <- fluidPage(
+#   fluidRow(
+#     box(plotOutput("weld")),
+#     box(uiOutput("pic"))),
+#   actionButton("refresh","Refresh", icon("refresh"))
+# )
+
+# library(shiny)
+# library(httr)
+# library(jsonlite)
+# library(plotly)
+# #library(shinydashboard)
+# 
+# setwd("D:/boschebol_hackathon/boschebol-gehaktbol")
+# #df <- data.frame()
+# df <- as.data.frame(sample(c(50.5:300),20))
+# names(df) <- "current"
+# df$resistance <- sample(c(70.5:150),20)
+# df$volt <- sample(c(110.5:170.8),20)
+# 
+# 
+# ui <- fluidPage(
+#   fluidRow(
+#     box(plotOutput("weld")),
+#     box(uiOutput("pic"))),
+#   plotOutput("sensor"),
+#   actionButton("refresh","Refresh", icon("refresh"))
+# )
+# 
+# server <- function(input, output){
+#   readWeld <- reactive({
+#     invalidateLater(1000)
+#     df <- as.data.frame(sample(c(50.5:300),20))
+#     names(df) <- "current"
+#     df$resistance <- sample(c(70.5:150),20)
+#     df$volt <- sample(c(110.5:170.8),20)
+#     #df <<- rbind(df,df)
+#     return(df)
+#   })
+#   output$weld <- renderPlot({
+#     #df <- readWeld()
+#     #print(df)
+#     plot(x=row.names(df),y=df$current, type="l",col="limegreen", ylim = c(1,350))
+#     lines(x=row.names(df),y=df$resistance,col="red")
+#     lines(x=row.names(df),y=df$volt)
+#   })
+#   output$pic <- renderUI({
+#     input$refresh
+#     isolate({
+#       num <- sample(c(1,2),1)
+#       files <- list.files("www/")
+#       image <- files[num]
+#       tags$img(src=image)
+#     })  
+#   })  
+# }
+# 
+# shinyApp(ui, server)
+
+# output$weld <- renderPlot({ #api call plot ####
+#   plotReactive()
+# })
+# plotReactive <- reactive({
+#   if(values$flag==TRUE){
+#     df <- apiCall()
+#     values$flag <- FALSE
+#   }
+#   par(mfrow=c(3,1))
+#   plot(x=row.names(df),y=df$current, type="l",col="limegreen")
+#   plot(x=row.names(df),y=df$resistance,col="red", type ="l")
+#   plot(x=row.names(df),y=df$voltage, type="l")
+# })
