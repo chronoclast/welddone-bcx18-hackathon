@@ -1,4 +1,4 @@
---[[---------------------------------------------------------------------------
+--[[----------------------------------------------------------------------------
   Script Name:
     WeldDone - A project built during the BCX 18 hackathon in Berlin, Germany.
     
@@ -15,10 +15,10 @@
   Guidelines:
     Before retrieving the images via FTP, remember to configure the transfers
     as binary, using the FTP command "bin".
------------------------------------------------------------------------------]]
+------------------------------------------------------------------------------]]
 
 
--- Global scope ---------------------------------------------------------------
+-- Global Scope ----------------------------------------------------------------
 
 require('BlobFeatures')
 
@@ -34,10 +34,10 @@ camera:setConfig(config)
 
 -- Initialize the counter for the image storage function.
 counter = 0
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 
--- FTP Server -----------------------------------------------------------------
+-- FTP Server ------------------------------------------------------------------
 -- Create the FTP server instance.
 handle = FTPServer.create()
 
@@ -51,10 +51,10 @@ if (success == true) then
     print("FTPServer is running. Connect to 127.0.0.1:21 with a FTP client")
   end
 end
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 
--- Function and event scope ---------------------------------------------------
+-- Function and event scope ----------------------------------------------------
 
 function main()
   camera:enable()
@@ -66,21 +66,48 @@ Script.register("Engine.OnStarted", main)
 -- Declare "im" as an image object.
 im = Image
 
+
 -- Function to store images periodically.
 function saveImage(im)
-  -- print("DEBUG - Saving image...")
+  print("DEBUG - Saving image...")
   Image.save(im, "public/image.png")
+end
+
+function writeAreaFile(areaValue)
+  print("DEBUG - Saving area value...")
+  print("DEBUG - Area value: ", areaValue)
+  print("DEBUG - Area value type:", type(areaValue))
+  -- print("YEAH",areaValue:toString())
+  -- stringo = toString(areaValue)
+  
+  -- Detect if the area is empty, or if there's an object.
+  local qualityPass = "EMPTY"
+  if type(areaValue) ~= nil then
+    -- If the area is smaller than 400000, the welding is OK.
+    if areaValue < 400000 then
+      qualityPass = "YES"
+    -- Otherwise, it's NOK.
+    elseif areaValue > 400000 then
+      qualityPass = "NO"
+    end
+  end
+  
+  local fileHandle = File.open("/public/area.txt", "wb")
+  local success = File.write(fileHandle, qualityPass)
+  File.close(fileHandle)
 end
 
 function grabImage(im, metaData)
   -- viewer:view(im)
-  -- print("DEBUG - Metadata:", metaData:toString())
-  area(im)  
-  -- Save the image only after 10 iterations (approx. 10s)
+  print("DEBUG - Metadata:", metaData:toString())
+  A = area(im)
+  -- print(A)
+  -- Save the image only after 5 iterations (approx. 5s)
   -- print("DEBUG - Counter:", counter)
-  if counter == 10 then
+  if counter == 5 then
       counter = 0
       saveImage(im)
+      writeAreaFile(A)
   else
       counter = counter + 1
   end
