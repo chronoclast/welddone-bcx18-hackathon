@@ -18,7 +18,7 @@ An algorithm processes the image, and detects if the part passes the quality con
 
 ## Business Presentation
 
-The video pitch is available in YouTube. Just click on the picture below.
+**The video pitch is available in YouTube.** Just click on the picture below.
 
 [![WeldDone by Team Boschebol](https://img.youtube.com/vi/7YV83LGDpco/0.jpg)](https://www.youtube.com/watch?v=7YV83LGDpco)
 
@@ -35,9 +35,8 @@ This presentation was made about one hour before the hackathon deadline in Googl
 For simplicity, this project runs in a computer with two network interfaces: The existing infrastructure at the hackathon location (subnet `100.102.5.XXX`) and a local network for the wired devices (subnet `192.168.1.XXX`). The devices are distributed as follows:
 
 * `192.168.1.1`: Balluff BNI EIP-508-105-R015 IO-Link Master
-* `192.168.1.2`: Sick InspectorP631
-    Flex 2D Camera
-* `192.168.1.99`: Host running the R/Shiny application.
+* `192.168.1.2`: Sick InspectorP631 Flex 2D Camera
+* `192.168.1.99`: Host running the R/Shiny application
 * `100.102.5.8`: Rexroth Welding Machine API
 
 ### Balluff IO-Link Setup
@@ -64,9 +63,23 @@ The device should be ready now. Since the optical sensor is connected to port 0,
 
 This request will return a JSON including the operational and process values of the sensor. The distance read by the sensor is _encapsulated_ in the first two bytes of the process inputs. Converting this value to integer will provide us with the distance in millimiters.
 
+Additional documentation of the built-in API can be found on [this reference manual](https://github.com/chronoclast/welddone-bcx18-hackathon/blob/master/assets/balluff-ports-jsn.pdf).
+
 ### Sick Camera
 
-`DOCS IN PROGRESS!`
+![](assets/sick-camera.jpg)
+
+The [Sick InspectorP631 Flex camera](https://www.sick.com/de/en/vision/2d-vision/inspectorp63x/c/g401751) can run image processing algorithms on the device itself. Besides, it can communicate with other devices or services using several protocols, including MQTT, HTTP, and more. 
+
+In this project, the images and the log file (with the result of the quality control test) are provided to the WeldDone application via an FTP server.
+
+The program running on the camera is written in Lua, and can be flashed on the device using Sick AppStudio. The code can be found in the folder `sick-camera`, under the name [`main.lua`](https://github.com/chronoclast/welddone-bcx18-hackathon/blob/master/sick-camera/main.lua).
+
+**Sick AppStudio requires a 64-bit Windows machine.** After installing it, and activating it using a valid licence, make sure to replicate the folder structure as shown below:
+
+![](assets/sick-appstudio-app.png)
+
+Once ready, transfer the app to the device. The device must have the IP address `192.168.1.2` so the WeldDone application can successfully log into the FTP server and retrieve the images and the log.
 
 ### Rexroth Welding Machine API
 
@@ -92,9 +105,14 @@ Once ready, we will need to install some required libraries with the following c
 
     install.packages(c("shiny","httr","shinydashboard","jsonlite","RCurl"))
 
-To run the app, simply open the file `app.R` in R Studio, and click on **"Run App"**. The _WeldDone_ dashboard will be launched.
+To run the app, simply open the file [`app.R`](https://github.com/chronoclast/welddone-bcx18-hackathon/blob/master/app.R) in R Studio, and click on **"Run App"**. The _WeldDone_ dashboard will be launched.
 
 ![](assets/welddone-dashboard.png)
+
+## To Do
+
+* Proof read
+* Explain in detail what the Lua script actually does
 
 ## License
 
