@@ -2,21 +2,25 @@
 
 ### By Team _Boschebol_
 
-_A project by Emelie Hofland and Jaime González-Arintero. Created during the [BCX 18 hackathon](http://bcw.bosch-si.com/berlin/hackathon/) in Berlin, on February 20-22, 2018._
+_A project by Emelie Hofland and Jaime González-Arintero. Winner of the Manufacturing 4.0 challenge at the [BCX 18 hackathon](http://bcw.bosch-si.com/berlin/hackathon/) in Berlin, on February 20-22, 2018._
 
 ## Introduction
 
-This project integrates real-time welding data, sensor input, and live images of the welding spot to analyze the quality and detect anomalies.
+This project combines **real-time welding data with image recognition to increase the accuracy detecting rejects in production lines**. Just a simple proof of concept developed in less than two days, but using real industrial-grade hardware.
 
-This is how the *WeldDone* looks like:
+And this is how the *WeldDone* dashboard looks like:
 
 ![](assets/welddone-dashboard.png)
+
+Every time that a part is produced, this event is detected by a Balluff optical sensor. Then, the data of the welding process is retrieved from a Rexroth controller. At the same time, a real-time image of the finished part is taken using a Sick camera.
+
+An algorithm processes the image, and detects if the part passes the quality control on the right side, while the welding data is analyzed, displaying the production values and other indicators at the left.
 
 ## Business Presentation
 
 The video pitch is available in YouTube. Just click on the picture below.
 
-[![WeldDone by Team Boschebol](https://img.youtube.com/vi/7YV83LGDpco/0.jpg)](https://www.youtube.com/watch?v= 7YV83LGDpco)
+[![WeldDone by Team Boschebol](https://img.youtube.com/vi/7YV83LGDpco/0.jpg)](https://www.youtube.com/watch?v=7YV83LGDpco)
 
 This presentation was made about one hour before the hackathon deadline in Google Slides. After that, the screen was captured while the voice and the (live!) ukulele music were recorded. *For the startup feeling, you know.*
 
@@ -91,10 +95,6 @@ Once ready, we will need to install some required libraries with the following c
 To run the app, simply open the file `app.R` in R Studio, and click on **"Run App"**. The _WeldDone_ dashboard will be launched.
 
 ![](assets/welddone-dashboard.png)
-
-## To Do
-
-`DOCS IN PROGRESS!`
 
 ## License
 
